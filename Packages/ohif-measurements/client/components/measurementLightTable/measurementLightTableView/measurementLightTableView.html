@@ -1,0 +1,24 @@
+<template name="measurementLightTableView">
+    {{#let config=measurementConfiguration groups=measurementGroups.get}}
+        {{#each measurementGroup in groups}}
+            {{! #if hasMeasurements measurementGroup.toolGroup.id}}
+                {{>measurementLightTableHeaderRow (clone this
+                    toolGroup=measurementGroup.toolGroup
+                    measurementRows=measurementGroup.measurementRows)}}
+            {{! /if}}
+            {{#each rowItem in measurementGroup.measurementRows}}
+                {{>measurementLightTableRow (clone this rowItem=rowItem)}}
+            {{/each}}
+        {{/each}}
+    {{/let}}
+    {{#if hasAnyMeasurement}}
+    <div class="report-area">
+        {{#if or (hasMeasurements 'targets') (hasMeasurements 'nonTargets')}}
+        <div class="btn btn-sm js-pdf">Generate Report</div>
+        {{/if}}
+        {{#if (hasMeasurements 'allTools')}}
+        <div class="btn btn-sm js-csv">Export to CSV</div>
+        {{/if}}
+    </div>
+    {{/if}}
+</template>
