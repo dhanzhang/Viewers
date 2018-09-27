@@ -21,12 +21,16 @@ const allCornerstoneEvents = ['click', 'cornerstonetoolsmousedown', 'cornerstone
     'cornerstonetoolsmousewheel', 'cornerstonetoolsdoubletap', 'cornerstonetoolstouchpress',
     'cornerstonetoolsmultitouchstart', 'cornerstonetoolsmultitouchstartactive', 'cornerstonetoolsmultitouchdrag'];
 
+const PLUGIN_CORNERSTONE = 'cornerstone';
+
 /**
  * This function loads a study series into a viewport element.
  *
  * @param data {object} Object containing the study, series, and viewport element to be used
  */
 const loadDisplaySetIntoViewport = (data, templateData) => {
+    const wlPresets = OHIF.viewerbase.wlPresets;
+
     OHIF.log.info('imageViewerViewport loadDisplaySetIntoViewport');
 
     // Make sure we have all the data required to render the series
@@ -38,7 +42,7 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
     // Get the current element and it's index in the list of all viewports
     // The viewport index is often used to store information about a viewport element
     const element = data.element;
-    const viewportIndex = $('.imageViewerViewport').index(element);
+    const viewportIndex = templateData.viewportIndex;
 
     const layoutManager = OHIF.viewerbase.layoutManager;
     layoutManager.viewportData = layoutManager.viewportData || {};
@@ -113,7 +117,8 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
         displaySetInstanceUid,
         currentImageIdIndex,
         viewport: viewport || data.viewport,
-        viewportIndex
+        viewportIndex,
+        plugin: PLUGIN_CORNERSTONE
     };
 
     // Handle the case where the imageId isn't loaded correctly and the
@@ -211,6 +216,9 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
             cornerstone.resize(element, true);
         }
 
+        // Set/store W/L preset data to Default on first display
+        wlPresets.updateElementWLPresetData(element);
+
         // Remove the data for this viewport from the ViewportLoading object
         // This will stop the loading percentage complete from being displayed.
         delete window.ViewportLoading[viewportIndex];
@@ -274,6 +282,7 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
         // (e.g. following a change of window or zoom)
         const onImageRendered = (event) => {
             const eventData = event.detail;
+            const { viewport, element } = eventData;
 
             // Attention: Adding OHIF.log.info in this function may decrease the performance
             // since this callback function is called multiple times (eg: when a tool is
@@ -288,9 +297,11 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
             Session.set('CornerstoneImageRendered' + viewportIndex, Math.random());
 
             // Save the current viewport into the OHIF.viewer.data global variable
-            const viewport = cornerstone.getViewport(element);
             layoutManager.viewportData[viewportIndex].viewport = viewport;
             OHIF.viewer.data.loadedSeriesData[viewportIndex].viewport = viewport;
+
+            // Update the W/L Preset data, if necessary
+            wlPresets.updateElementWLPresetData(element);
 
             // Check if it has onImageRendered loadAndCacheImage callback
             if (typeof callbacks.onImageRendered === 'function') {
@@ -345,6 +356,10 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
                 OHIF.viewer.data.loadedSeriesData[viewportIndex].currentImageIdIndex = imageIdIndex;
             }
 
+            const wlPresetData = cornerstone.getElementData(element, 'wlPreset');
+            const wlPresetDataName = wlPresetData && wlPresetData.name;
+            wlPresets.applyWLPreset(wlPresetDataName, element);
+
             // Check if it has onNewImage loadAndCacheImage callback
             if (typeof callbacks.onNewImage === 'function') {
                 callbacks.onNewImage(event, eventData, viewportIndex, templateData);
@@ -385,7 +400,6 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
             const element = (eventData && eventData.element) || (event && event.currentTarget);
             if (!element) return;
             const $element = $(element);
-            $element.focus();
 
             // Stop here if we don't have eventData set
             if (!eventData) return;
@@ -395,6 +409,8 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
             // If it was, no changes are necessary, so stop here.
             const activeViewportIndex = Session.get('activeViewport');
             if (viewportIndex === activeViewportIndex) return;
+            
+            $element.focus();
 
             OHIF.log.info('imageViewerViewport sendActivationTrigger');
 
@@ -449,16 +465,15 @@ const loadDisplaySetIntoViewport = (data, templateData) => {
         // This is done to ensure that the active element has the current
         // focus, so that keyboard events are triggered.
         if (viewportIndex === Session.get('activeViewport')) {
-            setActiveViewport(element);
+            const viewportContainer = $element.parents('.viewportContainer');
+
+            setActiveViewport(viewportContainer);
         }
 
         // Run any renderedCallback that exists in the data context
         if (data.renderedCallback && typeof data.renderedCallback === 'function') {
             data.renderedCallback(element);
         }
-
-        // Update the LayoutManagerUpdated session key
-        layoutManager.updateSession();
 
         // Check if it has after loadAndCacheImage callback
         if (typeof callbacks.after === 'function') {
@@ -612,8 +627,8 @@ Template.imageViewerViewport.onRendered(function() {
                 viewportIndexToZoom = layoutManager.zoomedViewportIndex || 0;
             }
             // Set zoomed viewport as active...
-            const element = $('.imageViewerViewport').get(viewportIndexToZoom);
-            setActiveViewport(element);
+            const viewportContainer = $('.viewportContainer').get(viewportIndexToZoom);
+            setActiveViewport(viewportContainer);
         });
     }
 
@@ -670,6 +685,8 @@ Template.imageViewerViewport.onDestroyed(function() {
 Template.imageViewerViewport.events({
     'OHIFActivateViewport .imageViewerViewport'(event) {
         OHIF.log.info('imageViewerViewport OHIFActivateViewport');
-        setActiveViewport(event.currentTarget);
+
+        const viewportContainer = $(event.currentTarget).parents('.viewportContainer').get(0);
+        setActiveViewport(viewportContainer);
     }
 });

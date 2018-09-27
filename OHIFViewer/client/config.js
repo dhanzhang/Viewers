@@ -19,4 +19,20 @@ Meteor.startup(function() {
     };
 
     cornerstoneWADOImageLoader.webWorkerManager.initialize(config);
+
+    cornerstoneWADOImageLoader.configure({
+        beforeSend: function(xhr) {
+            const accessToken = OHIF.user.getAccessToken();
+
+            if (accessToken) {
+                xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+            }
+        }
+    });
 });
+
+if (Meteor.settings &&
+    Meteor.settings.public &&
+    Meteor.settings.public.clientOnly === true) {
+    Meteor.disconnect();
+}

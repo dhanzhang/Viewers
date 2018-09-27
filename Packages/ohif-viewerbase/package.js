@@ -14,7 +14,7 @@ Package.onUse(function(api) {
         'stylus',
         'momentjs:moment',
         'validatejs',
-        'u2622:persistent-session'
+        'cultofcoders:persistent-session'
     ]);
 
     // OHIF dependencies
@@ -29,6 +29,7 @@ Package.onUse(function(api) {
 
     const assets = [
         'assets/icons.svg',
+        'assets/user-menu-icons.svg',
         'assets/fonts/Roboto-Black-latin-ext.woff',
         'assets/fonts/Roboto-Black-latin-ext.woff2',
         'assets/fonts/Roboto-Black-latin.woff',
@@ -177,6 +178,10 @@ Package.onUse(function(api) {
     api.addFiles('client/components/viewer/toolbarSectionTools/toolbarSectionTools.js', 'client');
     api.addFiles('client/components/viewer/toolbarSectionTools/toolbarSectionTools.styl', 'client');
 
+    api.addFiles('client/components/viewer/userPreferences/dialog.html', 'client');
+    api.addFiles('client/components/viewer/userPreferences/dialog.js', 'client');
+    api.addFiles('client/components/viewer/userPreferences/dialog.styl', 'client');
+
     api.addFiles('client/components/viewer/confirmDeleteDialog/confirmDeleteDialog.html', 'client');
     api.addFiles('client/components/viewer/confirmDeleteDialog/confirmDeleteDialog.js', 'client');
     api.addFiles('client/components/viewer/confirmDeleteDialog/confirmDeleteDialog.styl', 'client');
@@ -214,8 +219,6 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-    const both = ['client', 'server'];
-
     api.versionsFrom('1.4');
 
     /*
@@ -228,8 +231,8 @@ Package.onTest(function(api) {
         'mongo',
         'momentjs:moment',
         'validatejs',
-        'u2622:persistent-session'
-    ], both);
+        'cultofcoders:persistent-session'
+    ], 'client');
 
     // OHIF dependencies
     api.use([
@@ -239,12 +242,12 @@ Package.onTest(function(api) {
         'ohif:core',
         'ohif:hotkeys',
         'ohif:log'
-    ], both);
+    ], 'client');
 
     /*
      * Our custom packages
      */
-    api.use('ohif:viewerbase', both);
+    api.use('ohif:viewerbase', 'client');
 
     /*
     * Tests framework components

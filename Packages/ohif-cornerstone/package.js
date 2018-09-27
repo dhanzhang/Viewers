@@ -7,10 +7,11 @@ Package.describe({
 Npm.depends({
     hammerjs: '2.0.8',
     'cornerstone-core': '2.2.4',
-    'cornerstone-tools': '2.3.3',
+    'cornerstone-tools': '2.3.9',
     'cornerstone-math': '0.1.6',
     'dicom-parser': '1.8.0',
-    'cornerstone-wado-image-loader': '2.1.1'
+    'cornerstone-wado-image-loader': '2.1.4',
+    'dcmjs': '0.1.5'
 });
 
 Package.onUse(function(api) {
@@ -29,4 +30,5 @@ Package.onUse(function(api) {
     api.export('cornerstoneTools', 'client');
     api.export('cornerstoneWADOImageLoader', 'client');
     api.export('dicomParser', 'client');
+    api.export('dcmjs', 'client');
 });
